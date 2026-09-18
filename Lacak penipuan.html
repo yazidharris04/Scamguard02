@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ScamGuard - Detektif Penipu</title>
+    <!-- Import Font Modern 'Poppins' -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ================= VARIABEL WARNA & TEMA ================= */
+        :root {
+            --primary: #4f46e5;       /* Biru Indigo Modern */
+            --primary-hover: #4338ca;
+            --danger: #ef4444;        /* Merah Peringatan */
+            --danger-hover: #dc2626;
+            --success: #10b981;       /* Hijau Aman */
+            --bg-color: #f3f4f6;      /* Abu-abu sangat terang */
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        /* ================= RESET & PENGATURAN DASAR ================= */
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-dark); display: flex; justify-content: center; }
+        
+        /* Pembungkus utama agar di laptop terlihat seperti layar HP */
+        .app-container {
+            width: 100%; max-width: 480px; min-height: 100vh;
+            background-color: var(--bg-color); position: relative; overflow-x: hidden;
+        }
+
+        /* ================= HEADER & NAVIGASI ================= */
+        .header {
+            background-color: var(--card-bg);
+            color: var(--primary);
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex; align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .ikon-menu { font-size: 24px; margin-right: 15px; cursor: pointer; color: var(--text-dark); transition: 0.2s; }
+        .ikon-menu:active { transform: scale(0.9); }
+
+        /* ================= SIDEBAR (MENU SAMPING) ================= */
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
+            background-color: var(--card-bg);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000; display: flex; flex-direction: column;
+        }
+        .sidebar.buka { left: 0; }
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white; padding: 30px 20px 20px; font-size: 22px; font-weight: 700;
+        }
+        .menu-item {
+            padding: 18px 20px; color: var(--text-dark); font-size: 15px; font-weight: 500;
+            border-bottom: 1px solid var(--border-color); cursor: pointer;
+            display: flex; align-items: center; gap: 10px; transition: 0.2s;
+        }
+        .menu-item:hover, .menu-item.aktif { background-color: #e0e7ff; color: var(--primary); border-right: 4px solid var(--primary); }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
+            z-index: 999; display: none; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .overlay.tampil { display: block; opacity: 1; }
+
+        /* ================= KONTEN HALAMAN ================= */
+        .halaman { padding: 20px; display: none; animation: slideUp 0.4s ease forwards; }
+        .halaman.aktif { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .judul-halaman { font-size: 22px; font-weight: 700; margin-bottom: 5px; color: var(--text-dark); }
+        .deskripsi { font-size: 13px; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+
+        /* ================= FORM & INPUT MODERN ================= */
+        .card {
+            background-color: var(--card-bg); padding: 20px;
+            border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; }
+        input, select, textarea {
+            width: 100%; padding: 14px 16px; margin-bottom: 18px;
+            border: 1px solid var(--border-color); border-radius: 10px;
+            font-size: 14px; background-color: #f9fafb; outline: none;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            background-color: white; border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        }
+        textarea { height: 100px; resize: none; }
+
+        /* Area Upload Gambar */
+        .upload-area {
+            border: 2px dashed #cbd5e1; padding: 20px; text-align: center;
+            border-radius: 12px; background-color: #f8fafc; cursor: pointer;
+            transition: 0.2s; margin-bottom: 18px;
+        }
+        .upload-area:hover { border-color: var(--primary); background-color: #f1f5f9; }
+        .upload-area input { display: none; }
+        .upload-icon { font-size: 24px; margin-bottom: 5px; }
+        .upload-text { font-size: 13px; font-weight: 600; color: var(--primary); }
+        #preview-gambar { width: 100%; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid var(--border-color); }
+
+        /* Tombol Modern */
+        button {
+            width: 100%; padding: 16px; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; color: white;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        button:active { transform: scale(0.97); }
+        .btn-primary { background-color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-danger { background-color: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        /* ================= HASIL PENCARIAN (RESULT CARD) ================= */
+        .hasil-box { display: none; margin-top: 20px; animation: slideUp 0.3s ease; }
+        .status-badge {
+            display: inline-block; padding: 6px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; margin-bottom: 12px;
+        }
+        .bg-merah { background-color: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+        .hasil-detail h3 { font-size: 18px; margin-bottom: 5px; }
+        .hasil-detail p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+        
+        /* Notifikasi Sukses */
+        .toast {
+            display: none; background-color: #ecfdf5; border: 1px solid #a7f3d0;
+            color: var(--success); padding: 16px; border-radius: 12px;
+            text-align: center; font-weight: 500; font-size: 14px; margin-top: 15px;
+            animation: slideUp 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- HEADER -->
+    <div class="header">
+        <span class="ikon-menu" onclick="toggleMenu()">☰</span>
+        🛡️ ScamGuard
+    </div>
+
+    <!-- SIDEBAR MENU -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div>🛡️ ScamGuard</div>
+            <div style="font-size: 12px; font-weight:400; opacity: 0.8; margin-top: 5px;">Database Anti-Penipuan</div>
+        </div>
+        <div class="menu-item aktif" onclick="bukaHalaman('halaman-cek', this)">
+            🔍 Cek Rekening
+        </div>
+        <div class="menu-item" onclick="bukaHalaman('halaman-lapor', this)">
+            ⚠️ Lapor Penipu
+        </div>
+        <div class="menu-item" onclick="toggleMenu()" style="margin-top: auto; color: var(--danger);">
+            ✖ Tutup Menu
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- ================= HALAMAN 1: CEK REKENING ================= -->
+    <div id="halaman-cek" class="halaman aktif">
+        <div class="judul-halaman">Periksa Rekening</div>
+        <div class="deskripsi">Masukkan nomor rekening tujuan untuk memastikan riwayatnya aman sebelum mentransfer dana.</div>
+        
+        <div class="card">
+            <label>Nomor Rekening / E-Wallet</label>
+            <input type="number" id="inputCek" placeholder="Contoh: 1234567890">
+            <button class="btn-primary" id="btnCek" onclick="prosesCek()">
+                🔍 Periksa Data Sekarang
+            </button>
+        </div>
+
+        <!-- Kartu Hasil (Muncul Setelah Dicari) -->
+        <div class="card hasil-box" id="kotakHasil">
+            <div class="status-badge bg-merah" id="badgeHasil">🚨 TERINDIKASI PENIPU</div>
+            <div class="hasil-detail">
+                <h3 id="namaHasil">Berdasarkan Database</h3>
+                <p><strong>Dilaporkan:</strong> 12 Kali<br>
+                <strong>Catatan:</strong> Nomor ini sering digunakan untuk penipuan tiket online dan jual beli fiktif. Dilarang bertransaksi!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN 2: LAPOR PENIPU ================= -->
+    <div id="halaman-lapor" class="halaman">
+        <div class="judul-halaman">Buat Laporan Baru</div>
+        <div class="deskripsi">Bantu komunitas dengan melaporkan indikasi penipuan. Bukti foto wajib disertakan untuk validasi.</div>
+        
+        <div class="card">
+            <label>Nomor Rekening Pelaku</label>
+            <input type="number" placeholder="Contoh: 08123456789" id="laporNomor">
+            
+            <label>Bank / Platform</label>
+            <select id="laporBank">
+                <option value="">Pilih Bank Tujuan...</option>
+                <option value="BCA">BCA</option>
+                <option value="BRI">BRI</option>
+                <option value="Mandiri">Mandiri</option>
+                <option value="Dana">DANA / OVO / GoPay</option>
+            </select>
+            
+            <label>Kronologi Singkat</label>
+            <textarea placeholder="Ceritakan detail penipuan..." id="laporCerita"></textarea>
+            
+            <label>Unggah Bukti (Screenshot / Struk)</label>
+            <label for="inputBukti" class="upload-area">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Ketuk untuk pilih foto</div>
+                <input type="file" id="inputBukti" accept="image/*" onchange="tampilkanPreview()">
+                <img id="preview-gambar" alt="Preview Bukti">
+            </label>
+
+            <button class="btn-danger" id="btnLapor" onclick="kirimLaporan()">
+                Kirim Laporan Publik
+            </button>
+
+            <!-- Pesan Sukses -->
+            <div class="toast" id="pesanSukses">
+                ✅ Laporan berhasil dikirim!<br>
+                <span style="font-size: 12px; color:#059669;">Sedang dalam antrean verifikasi admin.</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ================= LOGIKA UI (USER INTERFACE) =================
+
+    // 1. Fungsi Buka/Tutup Menu Sidebar
+    function toggleMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        if (sidebar.classList.contains('buka')) {
+            sidebar.classList.remove('buka');
+            overlay.classList.remove('tampil');
+            setTimeout(() => { overlay.style.display = 'none'; }, 300); // Tunggu animasi pudar selesai
+        } else {
+            overlay.style.display = 'block';
+            setTimeout(() => { overlay.classList.add('tampil'); }, 10); // Paksa reflow animasi
+            sidebar.classList.add('buka');
+        }
+    }
+
+    // 2. Fungsi Pindah Halaman (Navigasi)
+    function bukaHalaman(idHalaman, elemenMenu) {
+        document.querySelectorAll('.halaman').forEach(hal => hal.classList.remove('aktif'));
+        document.querySelectorAll('.menu-item').forEach(menu => menu.classList.remove('aktif'));
+
+        document.getElementById(idHalaman).classList.add('aktif');
+        elemenMenu.classList.add('aktif');
+        toggleMenu(); // Otomatis tutup menu
+    }
+
+    // 3. Fungsi Preview Gambar Upload
+    function tampilkanPreview() {
+        const input = document.getElementById('inputBukti');
+        const preview = document.getElementById('preview-gambar');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // ================= LOGIKA DEMO (TIDAK PERLU SERVER) =================
+
+    // 4. Simulasi Tombol Cek Rekening
+    function prosesCek() {
+        const input = document.getElementById('inputCek').value;
+        const btn = document.getElementById('btnCek');
+        const hasil = document.getElementById('kotakHasil');
+
+        if(input === "") { alert("Harap masukkan nomor rekening!"); return; }
+
+        // Animasi Loading
+        btn.innerHTML = "⏳ Menganalisis Database...";
+        btn.style.opacity = "0.7";
+        hasil.style.display = "none";
+
+        // Simulasi nunggu server 1.5 detik
+        setTimeout(() => {
+            btn.innerHTML = "🔍 Periksa Data Sekarang";
+            btn.style.opacity = "1";
+            hasil.style.display = "block"; // Tampilkan kartu hasil
+        }, 1500);
+    }
+
+    // 5. Simulasi Tombol Kirim Laporan
+    function kirimLaporan() {
+        const no = document.getElementById('laporNomor').value;
+        const bank = document.getElementById('laporBank').value;
+        const cerita = document.getElementById('laporCerita').value;
+        
+        if(!no || !bank || !cerita) { alert("Harap lengkapi semua data!"); return; }
+
+        const btn = document.getElementById('btnLapor');
+        const pesan = document.getElementById('pesanSukses');
+
+        btn.innerHTML = "⏳ Mengunggah Bukti...";
+        btn.style.opacity = "0.7";
+
+        setTimeout(() => {
+            btn.style.display = "none"; // Sembunyikan tombol
+            pesan.style.display = "block"; // Tampilkan sukses
+            
+            // Bersihkan form
+            document.getElementById('laporNomor').value = "";
+            document.getElementById('laporCerita').value = "";
+            document.getElementById('preview-gambar').style.display = "none";
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
